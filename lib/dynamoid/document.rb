@@ -41,7 +41,7 @@ module Dynamoid #:nodoc:
       @new_record = true
       @attributes ||= {}
       attrs = self.class.undump(attrs)
-      self.class.attributes.keys.each {|att| write_attribute(att, attrs[att])}
+      self.class.attributes.keys.each {|att| send("#{att}=", attrs[att]) }
     end
     
     def ==(other)
