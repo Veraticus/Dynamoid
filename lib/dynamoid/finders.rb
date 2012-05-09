@@ -5,9 +5,9 @@ module Dynamoid
   # class level, like find, find_by_id, and the method_missing style finders.
   module Finders
     extend ActiveSupport::Concern
-    
+
     module ClassMethods
-      
+
       # Find one or many objects, specified by one id or an array of ids.
       #
       # @param [Array/String] *id an array of ids or one single id
@@ -38,10 +38,10 @@ module Dynamoid
       #
       # @return [Dynamoid::Document] the found object, or nil if nothing was found
       #
-      # @since 0.2.0      
+      # @since 0.2.0
       def find_by_id(id, options = {})
         if item = Dynamoid::Adapter.read(self.table_name, id, options)
-          obj = self.new(item)
+          item[:type] ? obj = item[:type].constantize.new(item) : obj = self.new(item)
           obj.new_record = false
           return obj
         else
@@ -59,7 +59,7 @@ module Dynamoid
       #
       # @return [Dynamoid::Document/Array] the found object, or an array of found objects if all was somewhere in the method
       #
-      # @since 0.2.0            
+      # @since 0.2.0
       def method_missing(method, *args)
         if method =~ /find/
           finder = method.to_s.split('_by_').first
@@ -67,7 +67,7 @@ module Dynamoid
 
           chain = Dynamoid::Criteria::Chain.new(self)
           chain.query = Hash.new.tap {|h| attributes.each_with_index {|attr, index| h[attr.to_sym] = args[index]}}
-          
+
           if finder =~ /all/
             return chain.all
           else
@@ -79,5 +79,5 @@ module Dynamoid
       end
     end
   end
-  
+
 end

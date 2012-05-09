@@ -6,18 +6,18 @@ module Dynamoid #:nodoc:
   module Document
     extend ActiveSupport::Concern
     include Dynamoid::Components
-    
+
     included do
       class_attribute :options
       self.options = {}
-      
+
       Dynamoid::Config.included_models << self
     end
-    
+
     module ClassMethods
-      # Set up table options, including naming it whatever you want, setting the id key, and manually overriding read and 
+      # Set up table options, including naming it whatever you want, setting the id key, and manually overriding read and
       # write capacity.
-      # 
+      #
       # @param [Hash] options options to pass for this table
       # @option options [Symbol] :name the name for the table; this still gets namespaced
       # @option options [Symbol] :id id column for the table
@@ -28,21 +28,21 @@ module Dynamoid #:nodoc:
       def table(options = {})
         self.options = options
       end
-      
+
       # Returns the read_capacity for this table.
       #
       # @since 0.4.0
       def read_capacity
         options[:read_capacity] || Dynamoid::Config.read_capacity
       end
-      
+
       # Returns the write_capacity for this table.
       #
       # @since 0.4.0
       def write_capacity
         options[:write_capacity] || Dynamoid::Config.write_capacity
       end
-      
+
       # Returns the id field for this class.
       #
       # @since 0.4.0
@@ -58,7 +58,7 @@ module Dynamoid #:nodoc:
       #
       # @since 0.2.0
       def create(attrs = {})
-        new(attrs).tap(&:save)
+        attrs[:type] ? attrs[:type].constantize.new(attrs).tap(&:save) : new(attrs).tap(&:save)
       end
 
       # Initialize a new object and immediately save it to the database. Raise an exception if persistence failed.
@@ -69,9 +69,9 @@ module Dynamoid #:nodoc:
       #
       # @since 0.2.0
       def create!(attrs = {})
-        new(attrs).tap(&:save!)
+        attrs[:type] ? attrs[:type].constantize.new(attrs).tap(&:save!) : new(attrs).tap(&:save!)
       end
-      
+
       # Initialize a new object.
       #
       # @param [Hash] attrs Attributes with which to create the object.
@@ -80,7 +80,7 @@ module Dynamoid #:nodoc:
       #
       # @since 0.2.0
       def build(attrs = {})
-        new(attrs)
+        attrs[:type] ? attrs[:type].constantize.new(attrs) : new(attrs)
       end
 
       # Does this object exist?
@@ -148,5 +148,5 @@ module Dynamoid #:nodoc:
       self.send("#{self.class.hash_key}=".to_sym, key)
     end
   end
-  
+
 end

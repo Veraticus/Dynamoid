@@ -122,7 +122,11 @@ module Dynamoid #:nodoc:
       end
 
       def records_with_range
-        Dynamoid::Adapter.query(source.table_name, range_query).collect {|hash| source.new(hash).tap { |r| r.new_record = false } }
+        Dynamoid::Adapter.query(source.table_name, range_query).collect do |hash|
+          hash[:type] ? obj = hash[:type].constantize.new(hash) : obj = source.new(hash)
+          obj.new_record = false
+          obj
+        end
       end
 
       # If the query does not match an index, we'll manually scan the associated table to find results.
@@ -136,7 +140,11 @@ module Dynamoid #:nodoc:
           Dynamoid.logger.warn "You can index this query by adding this to #{source.to_s.downcase}.rb: index [#{source.attributes.sort.collect{|attr| ":#{attr}"}.join(', ')}]"
         end
 
-        Dynamoid::Adapter.scan(source.table_name, query, query_opts).collect {|hash| source.new(hash).tap { |r| r.new_record = false } }
+        Dynamoid::Adapter.scan(source.table_name, query, query_opts).collect do |hash|
+          hash[:type] ? obj = hash[:type].constantize.new(hash) : obj = source.new(hash)
+          obj.new_record = false
+          obj
+        end
       end
 
       # Format the provided query so that it can be used to query results from DynamoDB.
