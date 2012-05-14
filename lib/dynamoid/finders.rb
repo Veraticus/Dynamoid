@@ -41,7 +41,7 @@ module Dynamoid
       # @since 0.2.0
       def find_by_id(id, options = {})
         if item = Dynamoid::Adapter.read(self.table_name, id, options)
-          obj = self.new(item)
+          item[:type] ? obj = item[:type].constantize.new(item) : obj = self.new(item)
           obj.new_record = false
           return obj
         else
