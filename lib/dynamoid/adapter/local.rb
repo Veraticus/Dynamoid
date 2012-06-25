@@ -118,7 +118,7 @@ module Dynamoid
       def put_item(table_name, object)
         table = data[table_name]
         table[:data][object[table[:hash_key]]]
-        table[:data]["#{object[table[:hash_key]]}.#{object[table[:range_key]]}"] = object.delete_if{|k, v| v.nil? }
+        table[:data]["#{object[table[:hash_key]]}.#{object[table[:range_key]]}"] = object.delete_if{|k, v| v.nil? || (v.respond_to?(:empty?) && v.empty?)}
       rescue
         raise data.inspect
       end
