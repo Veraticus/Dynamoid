@@ -87,7 +87,7 @@ describe "Dynamoid::Indexes::Index" do
     @index.save(@user)
     @index.delete(@user)
     
-    Dynamoid::Adapter.read("dynamoid_tests_index_user_names", 'Josh')[:ids].should be_nil
+    Dynamoid::Adapter.read("dynamoid_tests_index_user_names", 'Josh')[:ids].should be_empty
   end
   
   it 'updates an object by removing it from its previous index and adding it to its new one' do
@@ -99,7 +99,7 @@ describe "Dynamoid::Indexes::Index" do
 
     @user.update_attributes(:name => 'Justin')
     
-    Dynamoid::Adapter.read("dynamoid_tests_index_user_names", 'Josh')[:ids].should be_nil
+    Dynamoid::Adapter.read("dynamoid_tests_index_user_names", 'Josh')[:ids].should be_empty
     Dynamoid::Adapter.read("dynamoid_tests_index_user_names", 'Justin')[:ids].should == Set['test123']
   end
   

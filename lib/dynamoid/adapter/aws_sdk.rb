@@ -152,7 +152,7 @@ module Dynamoid
       # @since 0.2.0
       def put_item(table_name, object)
         table = get_table(table_name)
-        table.items.create(object.delete_if{|k, v| v.nil? || (v.respond_to?(:empty?) && v.empty?)})
+        table.items.create(object.delete_if{|k, v| v.nil? })
       end
 
       # Query the DynamoDB table. This employs DynamoDB's indexes so is generally faster than scanning, but is
