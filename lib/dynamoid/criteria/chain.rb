@@ -53,6 +53,10 @@ module Dynamoid #:nodoc:
         limit(1).first
       end
 
+      def last
+        records.last
+      end
+
       def limit(limit)
         @limit = limit
         records
