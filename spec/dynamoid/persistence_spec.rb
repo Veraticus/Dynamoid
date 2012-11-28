@@ -28,6 +28,57 @@ describe "Dynamoid::Persistence" do
     end
   end
 
+  describe "#undump_field" do
+    context "datetime fields" do
+      let(:now_t) { Time.now }
+      let(:now_d) { Date.today }
+      let(:now_dt) { now_t.to_datetime }
+      let(:now_f) { now_t.to_f }
+      let(:field) { {type: :datetime} }
+
+      it "just returns a Time object" do 
+        Address.undump_field(now_t, field).should eq(now_t)
+      end
+
+      it "just returns a Date object" do
+        Address.undump_field(now_d, field).should eq(now_d)
+      end
+
+      it "just returns a DateTime object" do
+        Address.undump_field(now_dt, field).should eq(now_dt)
+      end
+
+      context "with no time zones" do
+        it "returns the right time from the float argument" do
+          time = Address.undump_field(now_f, field)
+          
+          time.to_time.to_f.should eq(now_f)
+          time.zone.should eq(now_dt.zone)
+        end
+      end
+
+      context "with time zones" do
+        it "returns a time from the argument when no time zone" do
+          Time.stubs(zone: nil)
+          Address.undump_field(now_f, field).to_time.to_f.should eq(now_f)
+        end
+
+        it "returns a time from the argument and zone" do
+          zone = stub
+          date = DateTime.new(now_t.year, now_t.month, now_t.day, now_t.hour, now_t.min, now_t.sec, 0)
+          zone.expects(:at).with(now_f).returns(
+            stub(
+              to_datetime: date
+            )
+          )
+          Time.stubs(zone: zone)
+
+          Address.undump_field(now_f, field).should eq(date)
+        end
+      end
+    end
+  end
+
   it 'assigns itself an id on save' do
     @address.save
 
