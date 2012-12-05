@@ -91,15 +91,31 @@ module Dynamoid
     # Delete an item from a table. If partitioning is turned on, deletes all partitioned keys as well.
     #
     # @param [String] table the name of the table to write the object to
-    # @param [String] id the id of the record
-    # @param [Number] range_key the range key of the record
+    # @param [Array] ids to delete, can also be a string of just one id
+    # @param [Array] range_key of the record to delete, can also be a string of just one range_key
     #
-    # @since 0.2.0
-    def delete(table, id, options = {})
-      if Dynamoid::Config.partitioning?
-        id_with_partitions(id).each {|i| delete_item(table, i, options)}
+    def delete(table, ids, options = {})
+      range_key = options[:range_key] #array of range keys that matches the ids passed in
+      if ids.respond_to?(:each)
+        if range_key.respond_to?(:each)
+          #turn ids into array of arrays each element being hash_key, range_key
+          ids = ids.each_with_index.map{|id,i| [id,range_key[i]]}
+        else
+          ids = range_key ? [[ids, range_key]] : ids
+        end
+        
+        if Dynamoid::Config.partitioning?
+          batch_delete_item(table => id_with_partitions(ids))
+        else
+          batch_delete_item(table => ids)
+        end
       else
-        delete_item(table, id, options)
+        if Dynamoid::Config.partitioning?
+          ids = range_key ? [[ids, range_key]] : ids
+          batch_delete_item(table => id_with_partitions(ids))
+        else
+          delete_item(table, ids, options)
+        end
       end
     end
 

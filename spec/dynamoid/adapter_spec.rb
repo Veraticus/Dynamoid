@@ -42,6 +42,18 @@ describe "Dynamoid::Adapter" do
       Dynamoid::Adapter.read('dynamoid_tests_TestTable', ['1', '2'])
     end
     
+    it 'delete through the adapter for one ID' do
+      Dynamoid::Adapter.expects(:delete_item).with('dynamoid_tests_TestTable', '123', {}).returns(nil)
+
+      Dynamoid::Adapter.delete('dynamoid_tests_TestTable', '123')
+    end
+    
+    it 'deletes through the adapter for many IDs' do
+      Dynamoid::Adapter.expects(:batch_delete_item).with({'dynamoid_tests_TestTable' => ['1', '2']}).returns(nil)
+
+      Dynamoid::Adapter.delete('dynamoid_tests_TestTable', ['1', '2'])
+    end
+    
     it 'reads through the adapter for one ID and a range key' do
       Dynamoid::Adapter.expects(:get_item).with('dynamoid_tests_TestTable', '123', :range_key => 2.0).returns(true)
 
@@ -52,6 +64,18 @@ describe "Dynamoid::Adapter" do
       Dynamoid::Adapter.expects(:batch_get_item).with({'dynamoid_tests_TestTable' => [['1', 2.0], ['2', 2.0]]}).returns(true)
 
       Dynamoid::Adapter.read('dynamoid_tests_TestTable', ['1', '2'], :range_key => 2.0)
+    end
+    
+    it 'deletes through the adapter for one ID and a range key' do
+      Dynamoid::Adapter.expects(:delete_item).with('dynamoid_tests_TestTable', '123', :range_key => 2.0).returns(nil)
+
+      Dynamoid::Adapter.delete('dynamoid_tests_TestTable', '123', :range_key => 2.0)      
+    end
+    
+    it 'deletes through the adapter for many IDs and a range key' do
+      Dynamoid::Adapter.expects(:batch_delete_item).with({'dynamoid_tests_TestTable' => [['1', 2.0], ['2', 2.0]]}).returns(nil)
+
+      Dynamoid::Adapter.delete('dynamoid_tests_TestTable', ['1', '2'], :range_key => [2.0,2.0])
     end
   end
   
@@ -118,6 +142,29 @@ describe "Dynamoid::Adapter" do
       Dynamoid::Adapter.get_original_id_and_partition("#{@id}.#{@partition_number}").should == [@id, @partition_number]
     end
     
+    it 'delete through the adapter for one ID' do
+      Dynamoid::Adapter.expects(:batch_delete_item).with('dynamoid_tests_TestTable' => (0...Dynamoid::Config.partition_size).collect{|n| "123.#{n}"}).returns(nil)
+
+      Dynamoid::Adapter.delete('dynamoid_tests_TestTable', '123')
+    end
+    
+    it 'deletes through the adapter for many IDs' do
+      Dynamoid::Adapter.expects(:batch_delete_item).with('dynamoid_tests_TestTable' => (0...Dynamoid::Config.partition_size).collect{|n| "1.#{n}"} + (0...Dynamoid::Config.partition_size).collect{|n| "2.#{n}"}).returns(nil)
+
+      Dynamoid::Adapter.delete('dynamoid_tests_TestTable', ['1', '2'])
+    end
+    
+    it 'deletes through the adapter for one ID and a range key' do
+      Dynamoid::Adapter.expects(:batch_delete_item).with('dynamoid_tests_TestTable' => (0...Dynamoid::Config.partition_size).collect{|n| ["123.#{n}", 2.0]}).returns(nil)
+
+      Dynamoid::Adapter.delete('dynamoid_tests_TestTable', '123', :range_key => 2.0)      
+    end
+    
+    it 'deletes through the adapter for many IDs and a range key' do
+      Dynamoid::Adapter.expects(:batch_delete_item).with('dynamoid_tests_TestTable' => (0...Dynamoid::Config.partition_size).collect{|n| ["1.#{n}", 2.0]} + (0...Dynamoid::Config.partition_size).collect{|n| ["2.#{n}", 2.0]}).returns(nil)
+
+      Dynamoid::Adapter.delete('dynamoid_tests_TestTable', ['1', '2'], :range_key => [2.0,2.0])
+    end
   end
 
 end

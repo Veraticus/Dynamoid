@@ -99,6 +99,56 @@ describe Dynamoid::Adapter::AwsSdk do
         results['dynamoid_tests_TestTable3'].should include({:name => 'Josh', :id => '1', :range => 1.0})
         results['dynamoid_tests_TestTable3'].should include({:name => 'Justin', :id => '2', :range => 2.0})
       end
+      
+      # BatchDeleteItem
+      it "performs BatchDeleteItem with singular keys" do
+        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable1', {:id => '1', :name => 'Josh'})
+        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable2', {:id => '1', :name => 'Justin'})
+
+        Dynamoid::Adapter.batch_delete_item('dynamoid_tests_TestTable1' => ['1'], 'dynamoid_tests_TestTable2' => ['1'])
+        
+        results = Dynamoid::Adapter.batch_get_item('dynamoid_tests_TestTable1' => '1', 'dynamoid_tests_TestTable2' => '1')
+        results.size.should == 0
+        
+        results['dynamoid_tests_TestTable1'].should_not include({:name => 'Josh', :id => '1'})
+        results['dynamoid_tests_TestTable2'].should_not include({:name => 'Justin', :id => '1'})
+      end
+
+      it "performs BatchDeleteItem with multiple keys" do
+        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable1', {:id => '1', :name => 'Josh'})
+        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable1', {:id => '2', :name => 'Justin'})
+
+        Dynamoid::Adapter.batch_delete_item('dynamoid_tests_TestTable1' => ['1', '2'])
+        
+        results = Dynamoid::Adapter.batch_get_item('dynamoid_tests_TestTable1' => ['1', '2'])
+        results.size.should == 0
+        
+        results['dynamoid_tests_TestTable1'].should_not include({:name => 'Josh', :id => '1'})
+        results['dynamoid_tests_TestTable1'].should_not include({:name => 'Justin', :id => '2'})
+      end
+
+      it 'performs BatchDeleteItem with one ranged key' do
+        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable3', {:id => '1', :name => 'Josh', :range => 1.0})
+        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable3', {:id => '2', :name => 'Justin', :range => 2.0})
+
+        Dynamoid::Adapter.batch_delete_item('dynamoid_tests_TestTable3' => [['1', 1.0]])
+        results = Dynamoid::Adapter.batch_get_item('dynamoid_tests_TestTable3' => [['1', 1.0]])
+        results.size.should == 0
+
+        results['dynamoid_tests_TestTable3'].should_not include({:name => 'Josh', :id => '1', :range => 1.0})
+      end
+
+      it 'performs BatchDeleteItem with multiple ranged keys' do
+        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable3', {:id => '1', :name => 'Josh', :range => 1.0})
+        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable3', {:id => '2', :name => 'Justin', :range => 2.0})
+
+        Dynamoid::Adapter.batch_delete_item('dynamoid_tests_TestTable3' => [['1', 1.0],['2', 2.0]])
+        results = Dynamoid::Adapter.batch_get_item('dynamoid_tests_TestTable3' => [['1', 1.0],['2', 2.0]])
+        results.size.should == 0
+         
+        results['dynamoid_tests_TestTable3'].should_not include({:name => 'Josh', :id => '1', :range => 1.0})
+        results['dynamoid_tests_TestTable3'].should_not include({:name => 'Justin', :id => '2', :range => 2.0})
+      end
 
       # ListTables
       it 'performs ListTables' do
@@ -188,89 +238,6 @@ describe Dynamoid::Adapter::AwsSdk do
 
       after(:all) do
         Dynamoid::Config.partitioning = @previous_value
-      end
-
-      # GetItem, PutItem and DeleteItem
-      it "performs GetItem for an item that does not exist" do
-        Dynamoid::Adapter.get_item('dynamoid_tests_TestTable1', '1').should be_nil
-      end
-
-      it "performs GetItem for an item that does exist" do
-        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable1', {:id => '1', :name => 'Josh'})
-
-        Dynamoid::Adapter.get_item('dynamoid_tests_TestTable1', '1').should == {:name => 'Josh', :id => '1'}
-
-        Dynamoid::Adapter.delete_item('dynamoid_tests_TestTable1', '1')
-
-        Dynamoid::Adapter.get_item('dynamoid_tests_TestTable1', '1').should be_nil
-      end
-
-      it 'performs GetItem for an item that does exist with a range key' do
-        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable3', {:id => '1', :name => 'Josh', :range => 2.0})
-
-        Dynamoid::Adapter.get_item('dynamoid_tests_TestTable3', '1', :range_key => 2.0).should == {:name => 'Josh', :id => '1', :range => 2.0}
-
-        Dynamoid::Adapter.delete_item('dynamoid_tests_TestTable3', '1', :range_key => 2.0)
-
-        Dynamoid::Adapter.get_item('dynamoid_tests_TestTable3', '1', :range_key => 2.0).should be_nil
-      end
-
-      it 'performs DeleteItem for an item that does not exist' do
-        Dynamoid::Adapter.delete_item('dynamoid_tests_TestTable1', '1')
-
-        Dynamoid::Adapter.get_item('dynamoid_tests_TestTable1', '1').should be_nil
-      end
-
-      it 'performs PutItem for an item that does not exist' do
-        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable1', {:id => '1', :name => 'Josh'})
-
-        Dynamoid::Adapter.get_item('dynamoid_tests_TestTable1', '1').should == {:id => '1', :name => 'Josh'}
-      end
-
-      # BatchGetItem
-      it "performs BatchGetItem with singular keys" do
-        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable1', {:id => '1', :name => 'Josh'})
-        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable2', {:id => '1', :name => 'Justin'})
-
-        results = Dynamoid::Adapter.batch_get_item('dynamoid_tests_TestTable1' => '1', 'dynamoid_tests_TestTable2' => '1')
-        results.size.should == 2
-        results['dynamoid_tests_TestTable1'].should include({:name => 'Josh', :id => '1'})
-        results['dynamoid_tests_TestTable2'].should include({:name => 'Justin', :id => '1'})
-      end
-
-      it "performs BatchGetItem with multiple keys" do
-        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable1', {:id => '1', :name => 'Josh'})
-        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable1', {:id => '2', :name => 'Justin'})
-
-        results = Dynamoid::Adapter.batch_get_item('dynamoid_tests_TestTable1' => ['1', '2'])
-        results.size.should == 1
-        results['dynamoid_tests_TestTable1'].should include({:name => 'Josh', :id => '1'})
-        results['dynamoid_tests_TestTable1'].should include({:name => 'Justin', :id => '2'})
-      end
-
-      it 'performs BatchGetItem with one ranged key' do
-        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable3', {:id => '1', :name => 'Josh', :range => 1.0})
-        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable3', {:id => '2', :name => 'Justin', :range => 2.0})
-
-        results = Dynamoid::Adapter.batch_get_item('dynamoid_tests_TestTable3' => [['1', 1.0]])
-        results.size.should == 1
-        results['dynamoid_tests_TestTable3'].should include({:name => 'Josh', :id => '1', :range => 1.0})
-      end
-
-      it 'performs BatchGetItem with multiple ranged keys' do
-        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable3', {:id => '1', :name => 'Josh', :range => 1.0})
-        Dynamoid::Adapter.put_item('dynamoid_tests_TestTable3', {:id => '2', :name => 'Justin', :range => 2.0})
-
-        results = Dynamoid::Adapter.batch_get_item('dynamoid_tests_TestTable3' => [['1', 1.0],['2', 2.0]])
-        results.size.should == 1
-        results['dynamoid_tests_TestTable3'].should include({:name => 'Josh', :id => '1', :range => 1.0})
-        results['dynamoid_tests_TestTable3'].should include({:name => 'Justin', :id => '2', :range => 2.0})
-      end
-
-      # ListTables
-      it 'performs ListTables' do
-        Dynamoid::Adapter.list_tables.should include 'dynamoid_tests_TestTable1'
-        Dynamoid::Adapter.list_tables.should include 'dynamoid_tests_TestTable2'
       end
 
       # Query
