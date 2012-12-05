@@ -109,7 +109,13 @@ describe "Dynamoid::Adapter" do
       @time = DateTime.now
       @array =[{:id => '1.0', :updated_at => @time - 6.hours}, {:id => '1.1', :updated_at => @time - 3.hours}, {:id => '1.2', :updated_at => @time - 1.hour}, {:id => '1.3', :updated_at => @time - 6.hours}, {:id => '2.0', :updated_at => @time}]
     
-      Dynamoid::Adapter.result_for_partition(@array).should =~ [{:id => '1', :updated_at => @time - 1.hour}, {:id => '2', :updated_at => @time}]
+      Dynamoid::Adapter.result_for_partition(@array,"dynamoid_tests_TestTable").should =~ [{:id => '1', :updated_at => @time - 1.hour}, {:id => '2', :updated_at => @time}]
+    end
+    
+    it 'returns a valid original id and partition number' do
+      @id = "12345.387327.-sdf3"
+      @partition_number = "4"
+      Dynamoid::Adapter.get_original_id_and_partition("#{@id}.#{@partition_number}").should == [@id, @partition_number]
     end
     
   end
