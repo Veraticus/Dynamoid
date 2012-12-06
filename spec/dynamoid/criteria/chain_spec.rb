@@ -160,5 +160,4 @@ describe "Dynamoid::Associations::Chain" do
       @chain.consistent.all.size.should == 0
     end
   end
-
 end

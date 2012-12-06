@@ -21,6 +21,7 @@ describe Dynamoid::Adapter::AwsSdk do
         Dynamoid::Adapter.create_table('dynamoid_tests_TestTable1', :id) unless Dynamoid::Adapter.list_tables.include?('dynamoid_tests_TestTable1')
         Dynamoid::Adapter.create_table('dynamoid_tests_TestTable2', :id) unless Dynamoid::Adapter.list_tables.include?('dynamoid_tests_TestTable2')
         Dynamoid::Adapter.create_table('dynamoid_tests_TestTable3', :id, :range_key => { :range => :number }) unless Dynamoid::Adapter.list_tables.include?('dynamoid_tests_TestTable3')
+        Dynamoid::Adapter.create_table('dynamoid_tests_TestTable4', :id, :range_key => { :range => :number }) unless Dynamoid::Adapter.list_tables.include?('dynamoid_tests_TestTable4')
       end
 
       # GetItem, PutItem and DeleteItem
@@ -224,6 +225,37 @@ describe Dynamoid::Adapter::AwsSdk do
 
         Dynamoid::Adapter.scan('dynamoid_tests_TestTable1', {}).should include({:name=>"Josh", :id=>"2"}, {:name=>"Josh", :id=>"1"})
       end
+      
+      context 'correct ordering ' do
+        before do
+          Dynamoid::Adapter.put_item('dynamoid_tests_TestTable4', {:id => '1', :order => 1, :range => 1.0})
+          Dynamoid::Adapter.put_item('dynamoid_tests_TestTable4', {:id => '1', :order => 2, :range => 2.0})
+          Dynamoid::Adapter.put_item('dynamoid_tests_TestTable4', {:id => '1', :order => 3, :range => 3.0})
+          Dynamoid::Adapter.put_item('dynamoid_tests_TestTable4', {:id => '1', :order => 4, :range => 4.0})
+          Dynamoid::Adapter.put_item('dynamoid_tests_TestTable4', {:id => '1', :order => 5, :range => 5.0})
+          Dynamoid::Adapter.put_item('dynamoid_tests_TestTable4', {:id => '1', :order => 6, :range => 6.0})
+        end
+
+        it 'performs query on a table with a range and selects items less than that is in the correct order, scan_index_forward true' do
+          query = Dynamoid::Adapter.query('dynamoid_tests_TestTable4', :hash_value => '1', :range_greater_than => 0, :scan_index_forward => true)
+          query[0].should == {:id => '1', :order => 1, :range => BigDecimal.new(1)}
+          query[1].should == {:id => '1', :order => 2, :range => BigDecimal.new(2)}
+          query[2].should == {:id => '1', :order => 3, :range => BigDecimal.new(3)}
+          query[3].should == {:id => '1', :order => 4, :range => BigDecimal.new(4)}
+          query[4].should == {:id => '1', :order => 5, :range => BigDecimal.new(5)}
+          query[5].should == {:id => '1', :order => 6, :range => BigDecimal.new(6)}
+        end
+        
+        it 'performs query on a table with a range and selects items less than that is in the correct order, scan_index_forward false' do
+          query = Dynamoid::Adapter.query('dynamoid_tests_TestTable4', :hash_value => '1', :range_greater_than => 0, :scan_index_forward => false)
+          query[5].should == {:id => '1', :order => 1, :range => BigDecimal.new(1)}
+          query[4].should == {:id => '1', :order => 2, :range => BigDecimal.new(2)}
+          query[3].should == {:id => '1', :order => 3, :range => BigDecimal.new(3)}
+          query[2].should == {:id => '1', :order => 4, :range => BigDecimal.new(4)}
+          query[1].should == {:id => '1', :order => 5, :range => BigDecimal.new(5)}
+          query[0].should == {:id => '1', :order => 6, :range => BigDecimal.new(6)}
+        end
+      end
     end
     
     context 'with a preexisting table with paritioning' do
@@ -307,6 +339,37 @@ describe Dynamoid::Adapter::AwsSdk do
         Dynamoid::Adapter.put_item('dynamoid_tests_TestTable1', {:id => '2.1', :name => 'Josh'})
 
         Dynamoid::Adapter.scan('dynamoid_tests_TestTable1', {}).should include({:name=>"Josh", :id=>"2"}, {:name=>"Josh", :id=>"1"})
+      end
+      
+      context 'correct ordering ' do
+        before do
+          Dynamoid::Adapter.put_item('dynamoid_tests_TestTable4', {:id => '1.1', :range => 1.0})
+          Dynamoid::Adapter.put_item('dynamoid_tests_TestTable4', {:id => '1.2', :range => 2.0})
+          Dynamoid::Adapter.put_item('dynamoid_tests_TestTable4', {:id => '1.3', :range => 3.0})
+          Dynamoid::Adapter.put_item('dynamoid_tests_TestTable4', {:id => '1.4', :range => 4.0})
+          Dynamoid::Adapter.put_item('dynamoid_tests_TestTable4', {:id => '1.5', :range => 5.0})
+          Dynamoid::Adapter.put_item('dynamoid_tests_TestTable4', {:id => '1.6', :range => 6.0})
+        end
+
+        it 'performs query on a table with a range and selects items less than that is in the correct order, scan_index_forward true' do
+          query = Dynamoid::Adapter.query('dynamoid_tests_TestTable4', :hash_value => '1', :range_greater_than => 0, :scan_index_forward => true)
+          query[0].should == {:id => '1', :range => BigDecimal.new(1)}
+          query[1].should == {:id => '1', :range => BigDecimal.new(2)}
+          query[2].should == {:id => '1', :range => BigDecimal.new(3)}
+          query[3].should == {:id => '1', :range => BigDecimal.new(4)}
+          query[4].should == {:id => '1', :range => BigDecimal.new(5)}
+          query[5].should == {:id => '1', :range => BigDecimal.new(6)}
+        end
+        
+        it 'performs query on a table with a range and selects items less than that is in the correct order, scan_index_forward false' do
+          query = Dynamoid::Adapter.query('dynamoid_tests_TestTable4', :hash_value => '1', :range_greater_than => 0, :scan_index_forward => false)
+          query[5].should == {:id => '1', :range => BigDecimal.new(1)}
+          query[4].should == {:id => '1', :range => BigDecimal.new(2)}
+          query[3].should == {:id => '1', :range => BigDecimal.new(3)}
+          query[2].should == {:id => '1', :range => BigDecimal.new(4)}
+          query[1].should == {:id => '1', :range => BigDecimal.new(5)}
+          query[0].should == {:id => '1', :range => BigDecimal.new(6)}
+        end
       end
     end
 
