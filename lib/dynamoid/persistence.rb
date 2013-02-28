@@ -156,7 +156,7 @@ module Dynamoid
     #
     # @since 0.2.0
     def save(options = {})
-      self.class.create_table
+      self.class.create_table(options)
       
       if new_record?
         conditions = { :unless_exists => [self.class.hash_key]}
