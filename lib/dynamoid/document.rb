@@ -188,5 +188,9 @@ module Dynamoid #:nodoc:
     def range_value=(value)
       self.send("#{self.class.range_key}=", value)
     end
+
+    def count
+      12345
+    end
   end
 end
