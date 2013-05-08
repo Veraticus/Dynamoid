@@ -262,10 +262,6 @@ module Dynamoid
       def table_cache
         @table_cache ||= {}
       end
-
-      def describe_table(table_name)
-        @@connection.describe_table(table_name)
-      end
     end
   end
 end

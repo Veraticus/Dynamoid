@@ -56,7 +56,7 @@ module Dynamoid #:nodoc:
       end
 
       def count
-        1234
+        Dynamoid::Adapter.connection.client.describe_table(table_name: table_name)["Table"]["ItemCount"]
       end
 
       # Initialize a new object and immediately save it to the database.
