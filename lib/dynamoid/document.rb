@@ -55,6 +55,10 @@ module Dynamoid #:nodoc:
         options[:key] || :id
       end
 
+      def count
+        1234
+      end
+
       # Initialize a new object and immediately save it to the database.
       #
       # @param [Hash] attrs Attributes with which to create the object.
@@ -187,10 +191,6 @@ module Dynamoid #:nodoc:
 
     def range_value=(value)
       self.send("#{self.class.range_key}=", value)
-    end
-
-    def count
-      12345
     end
   end
 end
