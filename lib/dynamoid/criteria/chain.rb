@@ -247,12 +247,15 @@ module Dynamoid #:nodoc:
         end
       end
 
+      # Comparison Operator for evaluating Key Conditions.
+      #
+      # @return [Hash] a hash with the comparison operator for the query.
       def range_hash(key)
         val = query[key]
 
         return { :range_value => query[key] } if query[key].is_a?(Range)
 
-        case key.split('.').last
+        case key.to_s.split('.').last
         when 'gt'
           { :range_greater_than => val.to_f }
         when 'lt'

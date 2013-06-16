@@ -138,6 +138,43 @@ describe "Dynamoid::Associations::Chain" do
     @chain.send(:range?).should be_false
   end
 
+  context 'range hash' do
+    before do
+      @chain = Dynamoid::Criteria::Chain.new(Message)
+    end
+
+    it 'uses gt comparator' do
+      @chain.query = { 'time.gt' => 2 }
+      @chain.send(:range_hash, 'time.gt').to_a.should == {:range_greater_than => 2.to_f}.to_a
+    end
+
+    it 'uses lt comparator' do
+      @chain.query = { 'time.lt' => 2 }
+      @chain.send(:range_hash, 'time.lt').to_a.should == {:range_less_than => 2.to_f}.to_a
+    end
+
+    it 'uses gte comparator' do
+      @chain.query = { 'time.gte' => 2 }
+      @chain.send(:range_hash, 'time.gte').to_a.should == {:range_gte => 2.to_f}.to_a
+    end
+
+    it 'uses lte comparator' do
+      @chain.query = { 'time.lte' => 2 }
+      @chain.send(:range_hash, 'time.lte').to_a.should == {:range_lte => 2.to_f}.to_a
+    end
+
+    it 'uses begins_with comparator' do
+      @chain.query = { 'time.begins_with' => 2 }
+      @chain.send(:range_hash, 'time.begins_with').to_a.should == {:range_begins_with => 2.to_f}.to_a
+    end
+
+    it 'tests right convertion from sym to string' do
+      @chain.query = { 'time.begins_with'.to_sym => 2 }
+      @chain.send(:range_hash, 'time.begins_with').to_a.should == {:range_begins_with => 2.to_f}.to_a
+    end
+
+  end
+
   context 'range queries' do
     before do
       @tweet1 = Tweet.create(:tweet_id => "x", :group => "one")
