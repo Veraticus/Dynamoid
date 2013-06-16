@@ -251,9 +251,9 @@ module Dynamoid #:nodoc:
       #
       # @return [Hash] a hash with the comparison operator for the query.
       def range_hash(key)
-        val = query[key]
+        val = query[key.to_sym]
 
-        return { :range_value => query[key] } if query[key].is_a?(Range)
+        return { :range_value => val } if val.is_a?(Range)
 
         case key.to_s.split('.').last
         when 'gt'
