@@ -20,15 +20,15 @@ describe "Dynamoid::Associations::Chain" do
   end
 
   it 'makes string symbol for query keys' do
-    @chain.query = {'name' => 'Josh'}
+    @chain.query = {:name => 'Josh'}
     @chain.send(:index).should == User.indexes[[:name]]
   end
 
   it 'finds matching index for a range query' do
-    @chain.query = {"created_at.gt" => @time - 1.day}
+    @chain.query = {"created_at.gt".to_sym => @time - 1.day}
     @chain.send(:index).should == User.indexes[[:created_at]]
 
-    @chain.query = {:name => 'Josh', "created_at.lt" => @time - 1.day}
+    @chain.query = {:name => 'Josh', "created_at.lt".to_sym => @time - 1.day}
     @chain.send(:index).should == User.indexes[[:created_at, :name]]
   end
 
@@ -50,7 +50,8 @@ describe "Dynamoid::Associations::Chain" do
     @chain.query = {:name => 'Josh', :email => 'josh@joshsymonds.com'}
     @chain.send(:index_query).should == {:hash_value => 'josh@joshsymonds.com.Josh'}
 
-    @chain.query = {:name => 'Josh', 'created_at.gt' => @time}
+    # All keys are converted to_sym in the where method, so we should pass them in query as Symbols.
+    @chain.query = {:name => 'Josh', 'created_at.gt'.to_sym => @time}
     @chain.send(:index_query).should == {:hash_value => 'Josh', :range_greater_than => @time.to_f}
   end
 
@@ -66,10 +67,10 @@ describe "Dynamoid::Associations::Chain" do
   end
 
   it 'returns records with an index for a ranged query' do
-    @chain.query = {:name => 'Josh', "created_at.gt" => @time - 1.day}
+    @chain.query = {:name => 'Josh', "created_at.gt".to_sym => @time - 1.day}
     @chain.send(:records_with_index).should == @user
 
-    @chain.query = {:name => 'Josh', "created_at.lt" => @time + 1.day}
+    @chain.query = {:name => 'Josh', "created_at.lt".to_sym => @time + 1.day}
     @chain.send(:records_with_index).should == @user
   end
 
@@ -79,7 +80,7 @@ describe "Dynamoid::Associations::Chain" do
   end
 
   it "doesn't crash if it finds a nil id in the index" do
-    @chain.query = {:name => 'Josh', "created_at.gt" => @time - 1.day}
+    @chain.query = {:name => 'Josh', "created_at.gt".to_sym => @time - 1.day}
     Dynamoid::Adapter.expects(:query).
                       with("dynamoid_tests_index_user_created_ats_and_names", kind_of(Hash)).
                       returns([{ids: nil}, {ids: Set.new([42])}])
