@@ -69,23 +69,41 @@ describe "Dynamoid::Indexes::Index" do
     Dynamoid::Adapter.read("dynamoid_tests_index_user_names", 'Josh')[:ids].should == Set['test123']
   end
   
-  it 'saves an object to the index it is associated with with a range' do
+  it 'saves an object to the index it is associated with a range' do
     @index = Dynamoid::Indexes::Index.new(User, :name, :range_key => :last_logged_in_at)
     @user = User.create(:name => 'Josh', :last_logged_in_at => @time)
-    
+
     @index.save(@user)
-    
+
     Dynamoid::Adapter.read("dynamoid_tests_index_user_last_logged_in_ats_and_names", 'Josh', :range_key => @time.to_f)[:ids].should == Set[@user.id]
   end
-  
+
+  it 'saves an object with another HASH than id to the index' do
+    @index = Dynamoid::Indexes::Index.new(Message, :subject, :range_key => :time)
+    @message = Message.create(:subject => 'Hello!', :time => @time.to_f, :message_id => 100)
+
+    @index.save(@message)
+    Dynamoid::Adapter.read("dynamoid_tests_index_message_subjects_and_times", 'Hello!', :range_key => @time.to_f)[:ids].should == Set[@message.message_id]
+  end
+
   it 'deletes an object from the index it is associated with' do
     @index = Dynamoid::Indexes::Index.new(User, :name)
     @user = User.create(:name => 'Josh', :password => 'test123', :last_logged_in_at => @time, :id => 'test123')
-    
+
     @index.save(@user)
     @index.delete(@user)
-    
+
     Dynamoid::Adapter.read("dynamoid_tests_index_user_names", 'Josh')[:ids].should be_nil
+  end
+
+  it 'deletes an object with another HASH than id from the index it is associated with' do
+    @index = Dynamoid::Indexes::Index.new(Message, :subject, :range_key => :time)
+    @message = Message.create(:subject => 'Hello!', :time => @time.to_f, :message_id => 100)
+
+    @index.save(@message)
+    @index.delete(@message)
+
+    Dynamoid::Adapter.read("dynamoid_tests_index_message_subjects_and_times", 'Hello!', :range_key => @time.to_f)[:ids].should be_nil
   end
   
   it 'updates an object by removing it from its previous index and adding it to its new one' do
