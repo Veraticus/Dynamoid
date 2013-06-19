@@ -161,4 +161,13 @@ describe "Dynamoid::Document" do
       document.should_not == different
     end
   end
+
+  context '#count' do
+    it 'returns the number of documents in the table' do
+      document = Tweet.create(:tweet_id => 'x', :group => 'abc')
+      different = Tweet.create(:tweet_id => 'x', :group => 'xyz')
+
+      Tweet.count.should == 2
+    end
+  end
 end
