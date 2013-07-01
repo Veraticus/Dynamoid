@@ -31,6 +31,7 @@ module Dynamoid
   MAX_ITEM_SIZE = 65_536
   
   def configure
+    srand
     block_given? ? yield(Dynamoid::Config) : Dynamoid::Config
     Dynamoid::Adapter.reconnect!
   end
