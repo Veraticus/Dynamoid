@@ -75,6 +75,43 @@ module Dynamoid
         end
         hash
       end
+
+      # Persist many items at once from DynamoDB. More efficient than persisting each item individually.
+      #
+      # @example Persist {"foo": "bar"} and {"foo": "bear"} to table1, assuming "foo" is primary key (must include key).
+      #   Dynamoid::Adapter::AwsSdk.batch_put_item({'table1' => [{"foo" => "bar"}, {"foo" => "bear"}]})
+      #
+      # @param [Hash] table_objects the hash of tables and objects to persist
+      # @param [Hash] options to be passed to underlying BatchPut call
+      #
+      # @return nil
+      # 
+      def batch_put_item(table_objects, options = {})
+        return nil if table_objects.all?{|k, v| v.empty?}
+        table_objects.each do |t, objects|
+          Array(objects).in_groups_of(25, false) do |group|
+            batch = AWS::DynamoDB::BatchWrite.new(:config => @@connection.config)
+            batch.put(t, group)
+            batch.process!
+          end
+        end
+        nil
+      end
+      # Persists an item on DynamoDB.
+      #
+      # @param [String] table_name the name of the table
+      # @param [Object] object a hash or Dynamoid object to persist
+      #
+      # @since 0.2.0
+      def put_item(table_name, object, options = nil)
+        table = get_table(table_name)
+        table.items.create(
+          object.delete_if{|k, v| v.nil? || (v.respond_to?(:empty?) && v.empty?)},
+          options || {}
+        )
+      rescue AWS::DynamoDB::Errors::ConditionalCheckFailedException => e
+        raise Dynamoid::Errors::ConditionalCheckFailedException        
+      end
       
       # Delete many items at once from DynamoDB. More efficient than delete each item individually.
       #

@@ -28,9 +28,14 @@ describe Dynamoid::Adapter do
       Dynamoid::Config.partitioning = @previous_value
     end
     
-    it 'writes through the adapter' do
+    it 'writes through the adapter for one object' do
       described_class.expects(:put_item).with(test_table, {:id => single_id}, nil).returns(true)
       described_class.write(test_table, {:id => single_id})
+    end
+
+    it 'writes through the adapter for many objects' do
+      described_class.expects(:batch_put_item).with({test_table => many_ids.collect { |id| {:id => id} }}, nil).returns(true)
+      described_class.write(test_table, many_ids.collect { |id| {:id => id} })
     end
 
     it 'reads through the adapter for one ID' do
