@@ -182,7 +182,7 @@ module Dynamoid
             t.add(lock_version: 1)
           end
 
-          yield t
+          yield t if block
         end
         load(new_attrs)
       end

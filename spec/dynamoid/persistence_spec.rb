@@ -210,6 +210,10 @@ describe "Dynamoid::Persistence" do
     before :each do
       @tweet = Tweet.create(:tweet_id => 1, :group => 'abc', :count => 5, :tags => ['db', 'sql'], :user_name => 'john')
     end
+    
+    it 'runs without any block passed' do
+      CamelCase.create(:color=> 'blue').update({:color => 'red'}).should be_true
+    end
 
     it 'runs before_update callbacks when doing #update' do
       CamelCase.any_instance.expects(:doing_before_update).once.returns(true)
