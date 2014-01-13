@@ -30,7 +30,7 @@ gem 'aws-sdk'
 (or) include the aws-sdk in your Gemfile.
 
 
-[Refer this link for aws setup](https://github.com/amazonwebservices/aws-sdk-for-ruby)
+[Refer this link for aws setup](https://github.com/aws/aws-sdk-ruby)
 
 1. Just like the config/database.yml this file requires an entry for each environment, create config/aws.yml as follows:
 
