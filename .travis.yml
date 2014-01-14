@@ -4,4 +4,6 @@ gemfile:
   - Gemfile_activemodel4
 ruby:
   - 1.9.3
+  - 2.0.0
+  - 2.1.0
 script: bundle exec rake unattended_spec
