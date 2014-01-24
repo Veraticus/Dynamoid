@@ -63,6 +63,36 @@ describe "Dynamoid::Persistence" do
     Address.table_name.should == 'dynamoid_tests_addresses'
   end
 
+  context 'no namespace defined' do
+    let(:namespace) { "" }
+
+    before do
+      Dynamoid.configure do |config|
+        config.namespace = ""
+      end
+      Address.instance_variable_set("@table_name", nil)
+    end
+
+    it 'has a table name' do
+      Address.table_name.should == 'addresses'
+    end
+
+    after do
+      Dynamoid.configure do |config|
+        config.namespace = defined?(Rails) ? "dynamoid_#{Rails.application.class.parent_name}_#{Rails.env}" : "dynamoid"
+      end
+      Address.instance_variable_set("@table_name", nil)
+    end
+
+    context "nil namespace" do
+      let(:namespace) { nil }
+
+      it 'has a table name' do
+        Address.table_name.should == 'addresses'
+      end
+    end
+  end
+
   it 'saves indexes along with itself' do
     @user = User.new(:name => 'Josh')
 
