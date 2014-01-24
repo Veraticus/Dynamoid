@@ -79,7 +79,7 @@ describe "Dynamoid::Persistence" do
 
     after do
       Dynamoid.configure do |config|
-        config.namespace = defined?(Rails) ? "dynamoid_#{Rails.application.class.parent_name}_#{Rails.env}" : "dynamoid"
+        config.namespace = "dynamoid_tests"
       end
       Address.instance_variable_set("@table_name", nil)
     end
