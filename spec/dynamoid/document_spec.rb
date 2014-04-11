@@ -177,4 +177,20 @@ describe "Dynamoid::Document" do
       Tweet.count.should == 2
     end
   end
+
+  context 'load with undefined field attributes' do
+    before do
+      Dynamoid.configure{ |config| config.ignore_undefined_fileds = true }
+    end
+    it 'ignores undefined fields' do
+      Address.field :foo
+      address = Address.create(:foo => "bar")
+      Address.remove_field :foo
+      expect{ Address.find(address.id) }.not_to raise_exception(NoMethodError)
+      address.destroy
+    end
+    after do
+      Dynamoid.configure{ |config| config.ignore_undefined_fileds = false }
+    end
+  end
 end
