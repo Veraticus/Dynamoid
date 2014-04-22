@@ -50,7 +50,8 @@ module Dynamoid
       #
       # @since 0.2.0
       def table_exists?(table_name)
-        Dynamoid::Adapter.tables ? Dynamoid::Adapter.tables.include?(table_name) : false
+        Dynamoid::Adapter.tables = Dynamoid::Adapter.list_tables unless Dynamoid::Adapter.tables
+        Dynamoid::Adapter.tables.include?(table_name)
       end
 
       def from_database(attrs = {})
