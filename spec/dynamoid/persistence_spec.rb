@@ -33,25 +33,37 @@ describe "Dynamoid::Persistence" do
 
     Dynamoid::Adapter.read("dynamoid_tests_addresses", @address.id)[:id].should == @address.id
   end
-  
+
   it 'prevents concurrent writes to tables with a lock_version' do
     @address.save!
     a1 = @address
     a2 = Address.find(@address.id)
-    
+
     a1.city = 'Seattle'
     a2.city = 'San Francisco'
-    
+
     a1.save!
     expect { a2.save! }.to raise_exception(Dynamoid::Errors::ConditionalCheckFailedException)
   end
-  
+
+  it 'prevents concurrent writes to tables with a custom lock field' do
+    team = Team.create
+    a1 = team
+    a2 = Team.find(team.id)
+
+    a1.captain = 'Cristiano Ronaldo'
+    a2.captain = 'Lionel Messi'
+
+    a1.save!
+    expect { a2.save! }.to raise_exception(Dynamoid::Errors::ConditionalCheckFailedException)
+  end
+
   configured_with 'partitioning' do
     it 'raises an error when attempting to use optimistic locking' do
       expect { address.save! }.to raise_exception
     end
   end
-  
+
   it 'assigns itself an id on save only if it does not have one' do
     @address.id = 'test123'
     @address.save
@@ -256,15 +268,26 @@ describe "Dynamoid::Persistence" do
         end
       }.to raise_error(Dynamoid::Errors::ConditionalCheckFailedException)
     end
-    
+
     it 'prevents concurrent saves to tables with a lock_version' do
       @address.save!
       a2 = Address.find(@address.id)
       a2.update! { |a| a.set(:city => "Chicago") }
-      
+
       expect do
         @address.city = "Seattle"
         @address.save!
+      end.to raise_error(Dynamoid::Errors::ConditionalCheckFailedException)
+    end
+
+    it 'prevents concurrent writes to tables with a custom lock field' do
+      t1 = Team.create
+      t2 = Team.find(t1.id)
+      t2.update! { |t| t.set(:captain => "Cristiano Ronaldo") }
+
+      expect do
+        t1.captain = "Lionel Messi"
+        t1.save!
       end.to raise_error(Dynamoid::Errors::ConditionalCheckFailedException)
     end
 

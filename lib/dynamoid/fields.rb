@@ -10,8 +10,10 @@ module Dynamoid #:nodoc:
     included do
       class_attribute :attributes
       class_attribute :range_key
+      class_attribute :lock_field
 
       self.attributes = {}
+      self.lock_field = :lock_version
       field :created_at, :datetime
       field :updated_at, :datetime
 
@@ -40,6 +42,11 @@ module Dynamoid #:nodoc:
       def range(name, type = :string)
         field(name, type)
         self.range_key = name
+      end
+
+      def optimistic_lock_field(name)
+        field(name, :integer)
+        self.lock_field = name
       end
 
       def table(options)
