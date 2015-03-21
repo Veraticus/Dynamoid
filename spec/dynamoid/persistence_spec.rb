@@ -7,24 +7,31 @@ describe "Dynamoid::Persistence" do
     @address = Address.new
   end
 
-  context 'without AWS keys' do
-    unless ENV['ACCESS_KEY'] && ENV['SECRET_KEY']
-      before do
-        Dynamoid::Adapter.delete_table(Address.table_name) if Dynamoid::Adapter.list_tables.include?(Address.table_name)
+  context '.create_table' do
+    before do
+      if Dynamoid::Adapter.list_tables.include?(Address.table_name)
+        Dynamoid::Adapter.delete_table(Address.table_name)
+        Dynamoid::Adapter.reconnect!
       end
+    end
 
-      it 'creates a table' do
-        Address.create_table(:table_name => Address.table_name)
+    it 'creates a table' do
+      Address.create_table(:table_name => Address.table_name)
 
-        Dynamoid::Adapter.list_tables.should include 'dynamoid_tests_addresses'
-      end
+      Dynamoid::Adapter.list_tables.should include Address.table_name
+    end
 
-      it 'checks if a table already exists' do
-        Address.create_table(:table_name => Address.table_name)
+    it 'checks if a table already exists' do
+      Address.create_table(:table_name => Address.table_name)
 
-        Address.table_exists?(Address.table_name).should be_true
-        Address.table_exists?('crazytable').should be_false
-      end
+      Address.table_exists?(Address.table_name).should be_true
+      Address.table_exists?('crazytable').should be_false
+    end
+
+    it 'should not create when table already exists and Dynamoid::Adapter.tables is nil' do
+      Address.create_table(:table_name => Address.table_name)
+      Dynamoid::Adapter.tables = nil
+      expect{Address.create_table(:table_name => Address.table_name)}.not_to raise_error
     end
   end
 
@@ -33,25 +40,25 @@ describe "Dynamoid::Persistence" do
 
     Dynamoid::Adapter.read("dynamoid_tests_addresses", @address.id)[:id].should == @address.id
   end
-  
+
   it 'prevents concurrent writes to tables with a lock_version' do
     @address.save!
     a1 = @address
     a2 = Address.find(@address.id)
-    
+
     a1.city = 'Seattle'
     a2.city = 'San Francisco'
-    
+
     a1.save!
     expect { a2.save! }.to raise_exception(Dynamoid::Errors::ConditionalCheckFailedException)
   end
-  
+
   configured_with 'partitioning' do
     it 'raises an error when attempting to use optimistic locking' do
       expect { address.save! }.to raise_exception
     end
   end
-  
+
   it 'assigns itself an id on save only if it does not have one' do
     @address.id = 'test123'
     @address.save
@@ -256,12 +263,12 @@ describe "Dynamoid::Persistence" do
         end
       }.to raise_error(Dynamoid::Errors::ConditionalCheckFailedException)
     end
-    
+
     it 'prevents concurrent saves to tables with a lock_version' do
       @address.save!
       a2 = Address.find(@address.id)
       a2.update! { |a| a.set(:city => "Chicago") }
-      
+
       expect do
         @address.city = "Seattle"
         @address.save!
