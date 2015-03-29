@@ -204,6 +204,30 @@ describe Dynamoid::Adapter::AwsSdk do
       results[test_table3].should include({:name => 'Josh', :id => '1', :range => 1.0})
       results[test_table3].should include({:name => 'Justin', :id => '2', :range => 2.0})
     end
+
+    # BatchPutItem
+    it "performs BatchPutItem with singular keys" do
+      Dynamoid::Adapter.batch_put_item(test_table1 => [{:id => '1', :name => 'Josh'}], test_table2 => [{:id => '1', :name => 'Justin'}])
+      
+      results = Dynamoid::Adapter.batch_get_item(test_table1 => '1', test_table2 => '1')
+      results.size.should == 2
+      results[test_table1].size.should == 1
+      results[test_table2].size.should == 1
+      
+      results[test_table1].should include({:name => 'Josh', :id => '1'})
+      results[test_table2].should include({:name => 'Justin', :id => '1'})
+    end
+
+    it "performs BatchPutItem with multiple keys" do
+      Dynamoid::Adapter.batch_put_item(test_table1 => [{:id => '1', :name => 'Josh'}, {:id => '2', :name => 'Justin'}])
+      
+      results = Dynamoid::Adapter.batch_get_item(test_table1 => ['1', '2'])
+      results.size.should == 1
+      results[test_table1].size.should == 2
+      
+      results[test_table1].should include({:name => 'Josh', :id => '1'})
+      results[test_table1].should include({:name => 'Justin', :id => '2'})
+    end
     
     # BatchDeleteItem
     it "performs BatchDeleteItem with singular keys" do
