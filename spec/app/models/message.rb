@@ -6,4 +6,7 @@ class Message
   range :time, :datetime
 
   field :text
+  field :subject
+
+  index :subject, :range_key => :time
 end
