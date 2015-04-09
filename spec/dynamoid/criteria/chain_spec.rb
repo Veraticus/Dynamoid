@@ -20,15 +20,15 @@ describe "Dynamoid::Associations::Chain" do
   end
 
   it 'makes string symbol for query keys' do
-    @chain.query = {'name' => 'Josh'}
+    @chain.query = {:name => 'Josh'}
     @chain.send(:index).should == User.indexes[[:name]]
   end
 
   it 'finds matching index for a range query' do
-    @chain.query = {"created_at.gt" => @time - 1.day}
+    @chain.query = {"created_at.gt".to_sym => @time - 1.day}
     @chain.send(:index).should == User.indexes[[:created_at]]
 
-    @chain.query = {:name => 'Josh', "created_at.lt" => @time - 1.day}
+    @chain.query = {:name => 'Josh', "created_at.lt".to_sym => @time - 1.day}
     @chain.send(:index).should == User.indexes[[:created_at, :name]]
   end
 
@@ -50,7 +50,8 @@ describe "Dynamoid::Associations::Chain" do
     @chain.query = {:name => 'Josh', :email => 'josh@joshsymonds.com'}
     @chain.send(:index_query).should == {:hash_value => 'josh@joshsymonds.com.Josh'}
 
-    @chain.query = {:name => 'Josh', 'created_at.gt' => @time}
+    # All keys are converted to_sym in the where method, so we should pass them in query as Symbols.
+    @chain.query = {:name => 'Josh', 'created_at.gt'.to_sym => @time}
     @chain.send(:index_query).should == {:hash_value => 'Josh', :range_greater_than => @time.to_f}
   end
 
@@ -66,10 +67,10 @@ describe "Dynamoid::Associations::Chain" do
   end
 
   it 'returns records with an index for a ranged query' do
-    @chain.query = {:name => 'Josh', "created_at.gt" => @time - 1.day}
+    @chain.query = {:name => 'Josh', "created_at.gt".to_sym => @time - 1.day}
     @chain.send(:records_with_index).should == @user
 
-    @chain.query = {:name => 'Josh', "created_at.lt" => @time + 1.day}
+    @chain.query = {:name => 'Josh', "created_at.lt".to_sym => @time + 1.day}
     @chain.send(:records_with_index).should == @user
   end
 
@@ -79,7 +80,7 @@ describe "Dynamoid::Associations::Chain" do
   end
 
   it "doesn't crash if it finds a nil id in the index" do
-    @chain.query = {:name => 'Josh', "created_at.gt" => @time - 1.day}
+    @chain.query = {:name => 'Josh', "created_at.gt".to_sym => @time - 1.day}
     Dynamoid::Adapter.expects(:query).
                       with("dynamoid_tests_index_user_created_ats_and_names", kind_of(Hash)).
                       returns([{ids: nil}, {ids: Set.new([42])}])
@@ -136,6 +137,45 @@ describe "Dynamoid::Associations::Chain" do
 
     @chain.query = { :group => 'xx', :msg => 'hai' }
     @chain.send(:range?).should be_false
+  end
+
+  context 'range hash' do
+    before do
+      @chain = Dynamoid::Criteria::Chain.new(Message)
+    end
+
+    # All keys from query are converted automatically to_sym in where method.
+
+    it 'uses gt comparator' do
+      @chain.query = { 'time.gt'.to_sym => 2 }
+      @chain.send(:range_hash, 'time.gt').to_a.should == {:range_greater_than => 2.to_f}.to_a
+    end
+
+    it 'uses lt comparator' do
+      @chain.query = { 'time.lt'.to_sym => 2 }
+      @chain.send(:range_hash, 'time.lt').to_a.should == {:range_less_than => 2.to_f}.to_a
+    end
+
+    it 'uses gte comparator' do
+      @chain.query = { 'time.gte'.to_sym => 2 }
+      @chain.send(:range_hash, 'time.gte').to_a.should == {:range_gte => 2.to_f}.to_a
+    end
+
+    it 'uses lte comparator' do
+      @chain.query = { 'time.lte'.to_sym => 2 }
+      @chain.send(:range_hash, 'time.lte').to_a.should == {:range_lte => 2.to_f}.to_a
+    end
+
+    it 'uses begins_with comparator' do
+      @chain.query = { 'time.begins_with'.to_sym => 'test' }
+      @chain.send(:range_hash, 'time.begins_with').to_a.should == {:range_begins_with => 'test'}.to_a
+    end
+
+    it 'tests right convertion from sym to string' do
+      @chain.query = { 'time.begins_with'.to_sym => 'test' }
+      @chain.send(:range_hash, 'time.begins_with').to_a.should == {:range_begins_with => 'test'}.to_a
+    end
+
   end
 
   context 'range queries' do
