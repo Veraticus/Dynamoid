@@ -112,11 +112,15 @@ end
 
 Dynamoid has some sensible defaults for you when you create a new table, including the table name and the primary key column. But you can change those if you like on table creation.
 
+By default, Dynamoid uses a HASH key. If you would like to use a RANGE key instead, then you have to specify the range field name.
+
 ```ruby
 class User
   include Dynamoid::Document
 
   table :name => :awesome_users, :key => :user_id, :read_capacity => 400, :write_capacity => 400
+
+  range :range_name, :string
 end
 ```
 
