@@ -33,25 +33,25 @@ describe "Dynamoid::Persistence" do
 
     Dynamoid::Adapter.read("dynamoid_tests_addresses", @address.id)[:id].should == @address.id
   end
-  
+
   it 'prevents concurrent writes to tables with a lock_version' do
     @address.save!
     a1 = @address
     a2 = Address.find(@address.id)
-    
+
     a1.city = 'Seattle'
     a2.city = 'San Francisco'
-    
+
     a1.save!
     expect { a2.save! }.to raise_exception(Dynamoid::Errors::ConditionalCheckFailedException)
   end
-  
+
   configured_with 'partitioning' do
     it 'raises an error when attempting to use optimistic locking' do
       expect { address.save! }.to raise_exception
     end
   end
-  
+
   it 'assigns itself an id on save only if it does not have one' do
     @address.id = 'test123'
     @address.save
@@ -227,6 +227,24 @@ describe "Dynamoid::Persistence" do
       end
     end
 
+    it 'runs before_save callbacks when doing #update' do
+      instance = CamelCase.create(:color => 'blue')
+      instance.expects(:doing_before_save).once.returns(true)
+
+      instance.update do |t|
+        t.set(:color => 'red')
+      end
+    end
+
+    it 'runs after_save callbacks when doing #update' do
+      instance = CamelCase.create(:color => 'blue')
+      instance.expects(:doing_after_save).once.returns(true)
+
+      instance.update do |t|
+        t.set(:color => 'red')
+      end
+    end
+
     it 'support add/delete operation on a field' do
       @tweet.update do |t|
         t.add(:count => 3)
@@ -256,12 +274,12 @@ describe "Dynamoid::Persistence" do
         end
       }.to raise_error(Dynamoid::Errors::ConditionalCheckFailedException)
     end
-    
+
     it 'prevents concurrent saves to tables with a lock_version' do
       @address.save!
       a2 = Address.find(@address.id)
       a2.update! { |a| a.set(:city => "Chicago") }
-      
+
       expect do
         @address.city = "Seattle"
         @address.save!
