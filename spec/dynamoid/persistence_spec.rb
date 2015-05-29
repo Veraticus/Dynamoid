@@ -63,6 +63,36 @@ describe "Dynamoid::Persistence" do
     Address.table_name.should == 'dynamoid_tests_addresses'
   end
 
+  shared_examples "amissing namespace connection" do
+    before do
+      Dynamoid.configure do |config|
+        config.namespace = ""
+      end
+      Address.instance_variable_set("@table_name", nil)
+    end
+
+    after do
+      Dynamoid.configure do |config|
+        config.namespace = "dynamoid_tests"
+      end
+      #Address.instance_variable_set("@table_name", nil)
+    end
+
+    it 'has a table name' do
+      Address.table_name.should == 'addresses'
+    end
+  end
+
+  context 'no namespace defined' do
+    let(:namespace) { "" }
+    it_behaves_like "a missing namespace connection"
+  end
+
+  context "nil namespace" do
+    let(:namespace) { nil }
+    it_behaves_like "a missing namespace connection"
+  end
+
   it 'saves indexes along with itself' do
     @user = User.new(:name => 'Josh')
 
