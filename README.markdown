@@ -17,7 +17,7 @@ Installing Dynamoid is pretty simple. First include the Gem in your Gemfile:
 ```ruby
 gem 'dynamoid'
 ```
-## Prerequisities
+## Prerequisites
 
 Dynamoid depends on  the aws-sdk, and this is tested on the current version of aws-sdk (1.6.9), rails 3.2.8.
 Hence the configuration as needed for aws to work will be dealt with by aws setup.
@@ -59,7 +59,7 @@ Fill in your AWS Access Key ID and Secret Access Key
 
 ```ruby
 
-#Additionally include any of the dynamodb paramters as needed.
+#Additionally include any of the dynamodb parameters as needed.
 #(eg: if you would like to change the dynamodb endpoint, then add the parameter in
 # in the file  aws.yml or aws.rb
 
