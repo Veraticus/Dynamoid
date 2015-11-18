@@ -254,13 +254,13 @@ module Dynamoid #:nodoc:
 
         case key.to_s.split('.').last
         when 'gt'
-          { :range_greater_than => val.to_f }
+          { :range_greater_than => val }
         when 'lt'
-          { :range_less_than  => val.to_f }
+          { :range_less_than  => val }
         when 'gte'
-          { :range_gte  => val.to_f }
+          { :range_gte  => val }
         when 'lte'
-          { :range_lte => val.to_f }
+          { :range_lte => val }
         when 'begins_with'
           { :range_begins_with => val }
         end
